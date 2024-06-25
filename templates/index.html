@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .filters label {
+            font-weight: bold;
+        }
+        .filters input, .filters select, .filters button {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        .filters button {
+            width: auto;
+            padding: 3px 15px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button-primary {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .button-primary:hover {
+            background-color: #0056b3;
+        }
+        .button-secondary {
+            background-color: #6c757d;
+            color: #fff;
+        }
+        .button-secondary:hover {
+            background-color: #5a6268;
+        }
+        .result-count {
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ced4da;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #e9ecef;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .pagination a, .pagination strong {
+            margin: 0 5px;
+            padding: 8px 16px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #007bff;
+        }
+        .pagination strong {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 0px; /* Adjust this value to move the buttons higher */
+        }
+    </style>
+    <script>
+        function resetFilters() {
+            document.getElementById('title').value = '';
+            document.getElementById('director').value = '';
+            document.getElementById('start_year').value = '';
+            document.getElementById('end_year').value = '';
+            document.getElementById('release_date_start').value = '';
+            document.getElementById('release_date_end').value = '';
+            document.forms['filter-form'].submit();
+        }
+
+        function changeSort(sortBy) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('sort_by', sortBy);
+            window.location.search = params.toString();
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Movie List</h1>
+        <form id="filter-form" method="GET" action="{{ url_for('index') }}">
+            <div class="filters">
+                <div style="grid-column: span 7;">
+                    <label for="title">영화명:</label>
+                    <input type="text" id="title" name="title" value="{{ title }}">
+                </div>
+                <div style="grid-column: span 2;"></div>
+                <div style="grid-column: span 7;">
+                    <label for="director">감독명:</label>
+                    <input type="text" id="director" name="director" value="{{ director }}">
+                </div>
+                <div style="grid-column: span 2;"></div>
+                <div class="button-group" style="grid-column: span 6;">
+                    <button type="submit" class="button button-primary">조회</button>
+                    <button type="button" class="button button-secondary" onclick="resetFilters()">초기화</button>
+                </div>
+                <div style="grid-column: span 3;">
+                    <label for="start_year">제작연도 시작:</label>
+                    <input type="number" id="start_year" name="start_year" value="{{ start_year }}">
+                </div>
+                <div style="grid-column: span 1; display: flex; align-items: center; justify-content: center;">
+                    <span>~</span>
+                </div>
+                <div style="grid-column: span 3;">
+                    <label for="end_year">제작연도 끝:</label>
+                    <input type="number" id="end_year" name="end_year" value="{{ end_year }}">
+                </div>
+                <div style="grid-column: span 2;"></div>
+                <div style="grid-column: span 3;">
+                    <label for="release_date_start">개봉일자 시작:</label>
+                    <input type="date" id="release_date_start" name="release_date_start" value="{{ release_date_start }}">
+                </div>
+                <div style="grid-column: span 1; display: flex; align-items: center; justify-content: center;">
+                    <span>~</span>
+                </div>
+                <div style="grid-column: span 3;">
+                    <label for="release_date_end">개봉일자 끝:</label>
+                    <input type="date" id="release_date_end" name="release_date_end" value="{{ release_date_end }}">
+                </div>
+                <div style="grid-column: span 1;"></div>
+                
+                <div style="grid-column: span 4;">
+                    <label for="sort_by">정렬 기준:</label>
+                    <select id="sort_by" name="sort_by" onchange="changeSort(this.value)">
+                        <option value="movie_id" {% if sort_by == 'movie_id' %}selected{% endif %}>최신 업데이트순</option>
+                        <option value="released_year" {% if sort_by == 'released_year' %}selected{% endif %}>제작년도순</option>
+                        <option value="title" {% if sort_by == 'title' %}selected{% endif %}>영화명순</option>
+                        <option value="director" {% if sort_by == 'director' %}selected{% endif %}>감독명순</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+        <div class="result-count">
+            총 {{ total_movies }}건
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th><a href="javascript:void(0)" onclick="changeSort('title')">영화명</a></th>
+                    <th><a href="javascript:void(0)" onclick="changeSort('title_eng')">영화명(영문)</a></th>
+                    <th><a href="javascript:void(0)" onclick="changeSort('movie_id')">영화코드</a></th>
+                    <th><a href="javascript:void(0)" onclick="changeSort('released_year')">제작연도</a></th>
+                    <th>제작국가</th>
+                    <th>유형</th>
+                    <th>장르</th>
+                    <th>제작상태</th>
+                    <th><a href="javascript:void(0)" onclick="changeSort('director')">감독</a></th>
+                    <th>제작사</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for movie in movies %}
+                <tr>
+                    <td>{{ movie.title }}</td>
+                    <td>{{ movie.title_eng }}</td>
+                    <td>{{ movie.movie_id }}</td>
+                    <td>{{ movie.released_year }}</td>
+                    <td>{{ movie.country }}</td>
+                    <td>{{ movie.category }}</td>
+                    <td>{{ movie.genre }}</td>
+                    <td>{{ movie.status }}</td>
+                    <td>{{ movie.director }}</td>
+                    <td>{{ movie.company }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="pagination">
+            {% if start_page > 1 %}
+            <a href="{{ url_for('index', page=1, sort_by=sort_by, title=title, director=director, start_year=start_year, end_year=end_year) }}"><<</a>
+            <a href="{{ url_for('index', page=start_page - 1, sort_by=sort_by, title=title, director=director, start_year=start_year, end_year=end_year) }}"><</a>
+            {% endif %}
+            
+            {% for p in range(start_page, end_page + 1) %}
+                {% if p == page %}
+                    <strong>{{ p }}</strong>
+                {% else %}
+                    <a href="{{ url_for('index', page=p, sort_by=sort_by, title=title, director=director, start_year=start_year, end_year=end_year) }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if end_page < total_pages %}
+            <a href="{{ url_for('index', page=end_page + 1, sort_by=sort_by, title=title, director=director, start_year=start_year, end_year=end_year) }}">></a>
+            <a href="{{ url_for('index', page=total_pages, sort_by=sort_by, title=title, director=director, start_year=start_year, end_year=end_year) }}">>></a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
